@@ -28,8 +28,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/login', (req, res) => {
-    const authUrl = `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=guilds+identify`;
-    res.redirect(authUrl);
+    res.redirect('https://discord.com/oauth2/authorize?client_id=1458432385950552220&response_type=code&redirect_uri=http%3A%2F%2Farab-bot-discord.vercel.app%2Fcallback&scope=identify+guilds');
 });
 
 app.get('/callback', async (req, res) => {
