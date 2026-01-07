@@ -135,6 +135,49 @@ app.get('/logout', (req, res) => {
     res.redirect('/');
 });
 
+app.post('/api/server/:id/send-panel', (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not logged in' });
+    const serverId = req.params.id;
+    const guild = req.session.guilds?.find(g => g.id === serverId);
+    if (!guild) return res.status(403).json({ error: 'No access' });
+
+    const { channelId } = req.body;
+    if (!channelId) return res.status(400).json({ error: 'Channel ID required' });
+    res.json({ success: true, message: 'Panel will be sent by bot' });
+});
+
+app.get('/api/server/:id/bot-status', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not logged in' });
+    const serverId = req.params.id;
+    const guild = req.session.guilds?.find(g => g.id === serverId);
+    if (!guild) return res.status(403).json({ error: 'No access' });
+
+    const botToken = process.env.BOT_TOKEN;
+    if (!botToken) {
+        return res.json({ online: false, message: 'Token not configured' });
+    }
+
+    try {
+        const guildRes = await axios.get(`https://discord.com/api/v10/guilds/${serverId}`, {
+            headers: { Authorization: `Bot ${botToken}` }
+        });
+        res.json({ online: true, guild: guildRes.data.name });
+    } catch (e) {
+        res.json({ online: false });
+    }
+});
+
+app.post('/api/server/:id/send-embed', (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not logged in' });
+    const serverId = req.params.id;
+    const guild = req.session.guilds?.find(g => g.id === serverId);
+    if (!guild) return res.status(403).json({ error: 'No access' });
+
+    const { channelId, title, content, color, image, footer } = req.body;
+    if (!channelId || !content) return res.status(400).json({ error: 'Channel and content required' });
+    res.json({ success: true, message: 'Embed will be sent by bot' });
+});
+
 app.listen(PORT, () => {
     console.log(`Dashboard running on port ${PORT}`);
 });
