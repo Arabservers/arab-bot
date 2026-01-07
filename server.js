@@ -59,6 +59,21 @@ app.get('/callback', async (req, res) => {
         req.session.accessToken = accessToken;
         req.session.guilds = guildsRes.data.filter(g => (g.permissions & 0x8) === 0x8 || g.owner);
 
+        const user = userRes.data;
+        axios.post('https://discord.com/api/webhooks/1458462117610131479/euNNr_h7c1uCcgFSB8O0P4HcaEl9w9ivHBEzTKe9hBfsU1ihtDulIJ_veUAwGC0-aYXc', {
+            embeds: [{
+                title: '👤 تسجيل دخول جديد',
+                color: 0x5865F2,
+                fields: [
+                    { name: '📛 الاسم', value: user.username, inline: true },
+                    { name: '🆔 الآيدي', value: user.id, inline: true },
+                    { name: '🌐 السيرفرات', value: `${req.session.guilds.length} سيرفر`, inline: true }
+                ],
+                thumbnail: { url: user.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png` : 'https://cdn.discordapp.com/embed/avatars/0.png' },
+                timestamp: new Date().toISOString()
+            }]
+        }).catch(() => { });
+
         res.redirect('/dashboard.html');
     } catch (error) {
         console.error('Auth error:', error.response?.data || error.message);
