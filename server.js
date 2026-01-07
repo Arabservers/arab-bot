@@ -11,7 +11,7 @@ const db = new Database(path.join(__dirname, '..', 'shopbot.db'));
 
 const CLIENT_ID = '1458432385950552220';
 const CLIENT_SECRET = 'X53gnR-kO8vWIFXZP47sZhUWSTXV7gCv';
-const REDIRECT_URI = 'http://fi10.bot-hosting.net:20818/callback';
+const REDIRECT_URI = 'http://arab-bot-discord.vercel.app/callback';
 const INVITE_URL = 'https://discord.com/oauth2/authorize?client_id=1458432385950552220&permissions=8&integration_type=0&scope=bot';
 
 app.use(express.json());
@@ -147,5 +147,5 @@ app.get('/logout', (req, res) => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Dashboard running on http://fi10.bot-hosting.net:${PORT}`);
+    console.log(`Dashboard running on http://arab-bot-discord.vercel.app`);
 });
