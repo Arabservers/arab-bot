@@ -2,17 +2,18 @@ const express = require('express');
 const session = require('express-session');
 const axios = require('axios');
 const path = require('path');
-const Database = require('better-sqlite3');
 
 const app = express();
-const PORT = 20818;
-
-const db = new Database(path.join(__dirname, '..', 'shopbot.db'));
+const PORT = process.env.PORT || 3000;
 
 const CLIENT_ID = '1458432385950552220';
 const CLIENT_SECRET = 'X53gnR-kO8vWIFXZP47sZhUWSTXV7gCv';
 const REDIRECT_URI = 'http://arab-bot-discord.vercel.app/callback';
 const INVITE_URL = 'https://discord.com/oauth2/authorize?client_id=1458432385950552220&permissions=8&integration_type=0&scope=bot';
+
+let serverSettings = {};
+let serverShops = {};
+let serverBans = {};
 
 app.use(express.json());
 app.use(express.static(__dirname));
@@ -77,25 +78,17 @@ app.get('/api/server/:id', (req, res) => {
     const guild = req.session.guilds?.find(g => g.id === serverId);
     if (!guild) return res.status(403).json({ error: 'No access' });
 
-    let row = db.prepare('SELECT * FROM servers WHERE id = ?').get(serverId);
-    if (!row) {
-        db.prepare('INSERT INTO servers (id, settings) VALUES (?, ?)').run(serverId, '{}');
-        row = { id: serverId, settings: '{}' };
-    }
-
-    const settings = JSON.parse(row.settings);
-    const shops = db.prepare('SELECT * FROM shops WHERE server_id = ?').all(serverId);
-    const bannedUsers = db.prepare('SELECT * FROM users WHERE server_id = ? AND banned = 1').all(serverId);
-    const ratings = db.prepare(`SELECT r.*, s.name as shop_name FROM ratings r JOIN shops s ON r.shop_id = s.id WHERE s.server_id = ?`).all(serverId);
-    const topShops = db.prepare(`SELECT *, CASE WHEN rating_count > 0 THEN CAST(rating_total AS FLOAT) / rating_count ELSE 0 END as avg_rating FROM shops WHERE server_id = ? ORDER BY avg_rating DESC LIMIT 10`).all(serverId);
+    const settings = serverSettings[serverId] || {};
+    const shops = serverShops[serverId] || [];
+    const bannedUsers = serverBans[serverId] || [];
 
     res.json({
         guild,
         settings,
         shops,
         bannedUsers,
-        ratings,
-        topShops,
+        ratings: [],
+        topShops: shops.slice(0, 10),
         inviteUrl: INVITE_URL
     });
 });
@@ -107,9 +100,7 @@ app.post('/api/server/:id/settings', (req, res) => {
     const guild = req.session.guilds?.find(g => g.id === serverId);
     if (!guild) return res.status(403).json({ error: 'No access' });
 
-    const settings = req.body;
-    db.prepare('UPDATE servers SET settings = ? WHERE id = ?').run(JSON.stringify(settings), serverId);
-
+    serverSettings[serverId] = req.body;
     res.json({ success: true });
 });
 
@@ -120,7 +111,9 @@ app.post('/api/server/:id/unban/:userId', (req, res) => {
     const guild = req.session.guilds?.find(g => g.id === serverId);
     if (!guild) return res.status(403).json({ error: 'No access' });
 
-    db.prepare('UPDATE users SET banned = 0, warnings = 0, ban_reason = NULL WHERE id = ? AND server_id = ?').run(userId, serverId);
+    if (serverBans[serverId]) {
+        serverBans[serverId] = serverBans[serverId].filter(u => u.id !== userId);
+    }
     res.json({ success: true });
 });
 
@@ -132,11 +125,8 @@ app.post('/api/server/:id/ban', (req, res) => {
     const guild = req.session.guilds?.find(g => g.id === serverId);
     if (!guild) return res.status(403).json({ error: 'No access' });
 
-    let user = db.prepare('SELECT * FROM users WHERE id = ? AND server_id = ?').get(userId, serverId);
-    if (!user) {
-        db.prepare('INSERT INTO users (id, server_id) VALUES (?, ?)').run(userId, serverId);
-    }
-    db.prepare('UPDATE users SET banned = 1, ban_reason = ? WHERE id = ? AND server_id = ?').run(reason || 'بان من الداشبورد', userId, serverId);
+    if (!serverBans[serverId]) serverBans[serverId] = [];
+    serverBans[serverId].push({ id: userId, ban_reason: reason, warnings: 0 });
     res.json({ success: true });
 });
 
@@ -145,8 +135,8 @@ app.get('/logout', (req, res) => {
     res.redirect('/');
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Dashboard running on http://arab-bot-discord.vercel.app`);
+app.listen(PORT, () => {
+    console.log(`Dashboard running on port ${PORT}`);
 });
 
 module.exports = app;
