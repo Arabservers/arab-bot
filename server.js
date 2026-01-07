@@ -10,6 +10,7 @@ const CLIENT_ID = '1458432385950552220';
 const CLIENT_SECRET = 'X53gnR-kO8vWIFXZP47sZhUWSTXV7gCv';
 const REDIRECT_URI = 'http://arab-bot-discord.vercel.app/callback';
 const INVITE_URL = 'https://discord.com/oauth2/authorize?client_id=1458432385950552220&permissions=8&integration_type=0&scope=bot';
+const BOT_API_URL = process.env.BOT_API_URL || 'http://fi10.bot-hosting.net:3001';
 
 let serverSettings = {};
 let serverShops = {};
@@ -150,7 +151,7 @@ app.get('/logout', (req, res) => {
     res.redirect('/');
 });
 
-app.post('/api/server/:id/send-panel', (req, res) => {
+app.post('/api/server/:id/send-panel', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Not logged in' });
     const serverId = req.params.id;
     const guild = req.session.guilds?.find(g => g.id === serverId);
@@ -158,7 +159,16 @@ app.post('/api/server/:id/send-panel', (req, res) => {
 
     const { channelId } = req.body;
     if (!channelId) return res.status(400).json({ error: 'Channel ID required' });
-    res.json({ success: true, message: 'Panel will be sent by bot' });
+
+    try {
+        const botRes = await axios.post(`${BOT_API_URL}/api/guild/${serverId}/send-panel`, {
+            channelId,
+            settings: serverSettings[serverId]
+        });
+        res.json(botRes.data);
+    } catch (e) {
+        res.json({ success: false, error: 'البوت غير متصل', inviteUrl: INVITE_URL });
+    }
 });
 
 app.get('/api/server/:id/bot-status', async (req, res) => {
@@ -167,22 +177,15 @@ app.get('/api/server/:id/bot-status', async (req, res) => {
     const guild = req.session.guilds?.find(g => g.id === serverId);
     if (!guild) return res.status(403).json({ error: 'No access' });
 
-    const botToken = process.env.BOT_TOKEN;
-    if (!botToken) {
-        return res.json({ online: false, message: 'Token not configured' });
-    }
-
     try {
-        const guildRes = await axios.get(`https://discord.com/api/v10/guilds/${serverId}`, {
-            headers: { Authorization: `Bot ${botToken}` }
-        });
-        res.json({ online: true, guild: guildRes.data.name });
+        const botRes = await axios.get(`${BOT_API_URL}/api/guild/${serverId}/status`);
+        res.json({ ...botRes.data, inviteUrl: INVITE_URL });
     } catch (e) {
-        res.json({ online: false });
+        res.json({ online: false, inviteUrl: INVITE_URL });
     }
 });
 
-app.post('/api/server/:id/send-embed', (req, res) => {
+app.post('/api/server/:id/send-embed', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Not logged in' });
     const serverId = req.params.id;
     const guild = req.session.guilds?.find(g => g.id === serverId);
@@ -190,7 +193,15 @@ app.post('/api/server/:id/send-embed', (req, res) => {
 
     const { channelId, title, content, color, image, footer } = req.body;
     if (!channelId || !content) return res.status(400).json({ error: 'Channel and content required' });
-    res.json({ success: true, message: 'Embed will be sent by bot' });
+
+    try {
+        const botRes = await axios.post(`${BOT_API_URL}/api/guild/${serverId}/send-embed`, {
+            channelId, title, content, color, image, footer
+        });
+        res.json(botRes.data);
+    } catch (e) {
+        res.json({ success: false, error: 'البوت غير متصل' });
+    }
 });
 
 app.listen(PORT, () => {
