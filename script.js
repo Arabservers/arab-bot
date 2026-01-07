@@ -478,12 +478,16 @@ async function checkBotStatus() {
         const res = await fetch(`/api/server/${currentServerId}/bot-status`);
         const data = await res.json();
         if (data.online) {
-            statusEl.innerHTML = '<span style="color: var(--success);">✅ البوت متصل ويعمل</span>';
+            statusEl.innerHTML = `<span style="color: var(--success);">✅ البوت متصل ويعمل</span> <span style="color: var(--text-muted);">(${data.name || 'سيرفر'})</span>`;
         } else {
-            statusEl.innerHTML = '<span style="color: var(--danger);">❌ البوت غير متصل</span>';
+            statusEl.innerHTML = `
+                <span style="color: var(--danger);">❌ البوت غير موجود في السيرفر</span>
+                <br><br>
+                <a href="${data.inviteUrl}" target="_blank" class="btn btn-primary">➕ إضافة البوت للسيرفر</a>
+            `;
         }
     } catch (e) {
-        statusEl.innerHTML = '<span style="color: var(--danger);">❌ تعذر التحقق</span>';
+        statusEl.innerHTML = '<span style="color: var(--danger);">❌ تعذر التحقق من حالة البوت</span>';
     }
 }
 
