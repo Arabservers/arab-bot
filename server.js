@@ -10,7 +10,7 @@ const CLIENT_ID = '1458432385950552220';
 const CLIENT_SECRET = 'X53gnR-kO8vWIFXZP47sZhUWSTXV7gCv';
 const REDIRECT_URI = 'http://arab-bot-discord.vercel.app/callback';
 const INVITE_URL = 'https://discord.com/oauth2/authorize?client_id=1458432385950552220&permissions=8&integration_type=0&scope=bot';
-const BOT_API_URL = process.env.BOT_API_URL || 'http://fi10.bot-hosting.net:3001';
+const BOT_TOKEN = process.env.BOT_TOKEN || 'MTQ1ODQzMjM4NTk1MDU1MjIyMA.GINYHh.Act0I8JaiiZ5JlzrvlarHXFKBk2jkaFnnjGZbk';
 
 let serverSettings = {};
 let serverShops = {};
@@ -160,14 +160,29 @@ app.post('/api/server/:id/send-panel', async (req, res) => {
     const { channelId } = req.body;
     if (!channelId) return res.status(400).json({ error: 'Channel ID required' });
 
+    const settings = serverSettings[serverId] || {};
+    const embed = {
+        title: settings.ticketPanel?.title || '🛒 نظام المتاجر',
+        description: settings.ticketPanel?.description || 'اختر نوع الخدمة المطلوبة من الأزرار أدناه',
+        color: 0x5865F2
+    };
+
     try {
-        const botRes = await axios.post(`${BOT_API_URL}/api/guild/${serverId}/send-panel`, {
-            channelId,
-            settings: serverSettings[serverId]
-        });
-        res.json(botRes.data);
+        await axios.post(`https://discord.com/api/v10/channels/${channelId}/messages`, {
+            embeds: [embed],
+            components: [{
+                type: 1,
+                components: [
+                    { type: 2, style: 1, label: settings.ticketButtons?.shop || 'شراء متجر 🏪', custom_id: 'ticket_shop' },
+                    { type: 2, style: 3, label: settings.ticketButtons?.mentions || 'منشنات 📢', custom_id: 'ticket_mentions' },
+                    { type: 2, style: 2, label: settings.ticketButtons?.helper || 'مساعد 👥', custom_id: 'ticket_helper' }
+                ]
+            }]
+        }, { headers: { Authorization: `Bot ${BOT_TOKEN}`, 'Content-Type': 'application/json' } });
+        res.json({ success: true });
     } catch (e) {
-        res.json({ success: false, error: 'البوت غير متصل', inviteUrl: INVITE_URL });
+        console.error('Send panel error:', e.response?.data || e.message);
+        res.json({ success: false, error: e.response?.data?.message || 'فشل الإرسال', inviteUrl: INVITE_URL });
     }
 });
 
@@ -178,8 +193,10 @@ app.get('/api/server/:id/bot-status', async (req, res) => {
     if (!guild) return res.status(403).json({ error: 'No access' });
 
     try {
-        const botRes = await axios.get(`${BOT_API_URL}/api/guild/${serverId}/status`);
-        res.json({ ...botRes.data, inviteUrl: INVITE_URL });
+        const guildRes = await axios.get(`https://discord.com/api/v10/guilds/${serverId}`, {
+            headers: { Authorization: `Bot ${BOT_TOKEN}` }
+        });
+        res.json({ online: true, name: guildRes.data.name, inviteUrl: INVITE_URL });
     } catch (e) {
         res.json({ online: false, inviteUrl: INVITE_URL });
     }
@@ -194,13 +211,22 @@ app.post('/api/server/:id/send-embed', async (req, res) => {
     const { channelId, title, content, color, image, footer } = req.body;
     if (!channelId || !content) return res.status(400).json({ error: 'Channel and content required' });
 
+    const embed = {
+        description: content,
+        color: parseInt(color?.replace('#', ''), 16) || 0x5865F2
+    };
+    if (title) embed.title = title;
+    if (image) embed.image = { url: image };
+    if (footer) embed.footer = { text: footer };
+
     try {
-        const botRes = await axios.post(`${BOT_API_URL}/api/guild/${serverId}/send-embed`, {
-            channelId, title, content, color, image, footer
-        });
-        res.json(botRes.data);
+        await axios.post(`https://discord.com/api/v10/channels/${channelId}/messages`, {
+            embeds: [embed]
+        }, { headers: { Authorization: `Bot ${BOT_TOKEN}`, 'Content-Type': 'application/json' } });
+        res.json({ success: true });
     } catch (e) {
-        res.json({ success: false, error: 'البوت غير متصل' });
+        console.error('Send embed error:', e.response?.data || e.message);
+        res.json({ success: false, error: e.response?.data?.message || 'فشل الإرسال' });
     }
 });
 
