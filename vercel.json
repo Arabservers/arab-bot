@@ -4,22 +4,6 @@
         {
             "src": "server.js",
             "use": "@vercel/node"
-        },
-        {
-            "src": "*.html",
-            "use": "@vercel/static"
-        },
-        {
-            "src": "*.css",
-            "use": "@vercel/static"
-        },
-        {
-            "src": "*.js",
-            "use": "@vercel/static"
-        },
-        {
-            "src": "*.png",
-            "use": "@vercel/static"
         }
     ],
     "routes": [
@@ -36,28 +20,8 @@
             "dest": "/logo.png"
         },
         {
-            "src": "/dashboard.html",
-            "dest": "/dashboard.html"
-        },
-        {
-            "src": "/login",
+            "src": "/(.*)",
             "dest": "/server.js"
-        },
-        {
-            "src": "/callback",
-            "dest": "/server.js"
-        },
-        {
-            "src": "/logout",
-            "dest": "/server.js"
-        },
-        {
-            "src": "/api/(.*)",
-            "dest": "/server.js"
-        },
-        {
-            "src": "/",
-            "dest": "/index.html"
         }
     ]
 }
