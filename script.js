@@ -123,6 +123,11 @@ function renderTab(tab) {
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
+                    <div class="form-group">
+                        <label>رابط Webhook اللوج (اختياري)</label>
+                        <input type="text" id="logWebhook" value="${currentSettings.logWebhook || ''}" placeholder="https://discord.com/api/webhooks/...">
+                        <small style="color: var(--text-muted);">سيتم إرسال لوج لكل عملية في السيرفر</small>
+                    </div>
                 </div>
                 
                 <div class="settings-section">
@@ -604,6 +609,9 @@ function collectSettings() {
 
     const ratingEnabled = document.getElementById('ratingEnabled');
     if (ratingEnabled) settings.ratingEnabled = ratingEnabled.checked;
+
+    const logWebhook = document.getElementById('logWebhook');
+    if (logWebhook) settings.logWebhook = logWebhook.value;
 
     const shopCategoryId = document.getElementById('shopCategoryId');
     if (shopCategoryId) settings.shopCategoryId = shopCategoryId.value;
