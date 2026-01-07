@@ -10,7 +10,7 @@ const CLIENT_ID = '1458432385950552220';
 const CLIENT_SECRET = 'X53gnR-kO8vWIFXZP47sZhUWSTXV7gCv';
 const REDIRECT_URI = 'http://arab-bot-discord.vercel.app/callback';
 const INVITE_URL = 'https://discord.com/oauth2/authorize?client_id=1458432385950552220&permissions=8&integration_type=0&scope=bot';
-const BOT_TOKEN = process.env.BOT_TOKEN || 'MTQ1ODQzMjM4NTk1MDU1MjIyMA.GINYHh.Act0I8JaiiZ5JlzrvlarHXFKBk2jkaFnnjGZbk';
+const BOT_TOKEN = process.env.BOT_TOKEN || 'MTQ1ODQzMjM4NTk1MDU1MjIyMA.G-EY4K.ct3sg5gfKk6uG2chEUrt8h1TqUFIzlXYDzsFqk';
 
 let serverSettings = {};
 let serverShops = {};
